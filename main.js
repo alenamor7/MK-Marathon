@@ -1,5 +1,6 @@
 const $arena = document.querySelector('.arenas');
 const $randomButton = document.querySelector('.button');
+const $reloadButton = createReloadButton();
 
 const scorpion = {
     player: 1,
@@ -7,9 +8,9 @@ const scorpion = {
     hp: 100,
     img: 'http://reactmarathon-api.herokuapp.com/assets/scorpion.gif',
     weapon: ['kunai', 'axe', 'ninja sword'],
-    attack: function() {
-        console.log(this.name + ' Fight...');
-    }
+    changeHp: changeHP,
+    elHp: elHp,
+    renderHp: renderHp
 };
 
 const sonya = {
@@ -18,9 +19,9 @@ const sonya = {
     hp: 100,
     img: 'http://reactmarathon-api.herokuapp.com/assets/sonya.gif',
     weapon: ['wind blade', 'garrote wire', 'energy bracelets'],
-    attack: function() {
-        console.log(this.name + ' Fight...');
-    }
+    changeHp: changeHP,
+    elHp: elHp,
+    renderHp: renderHp
 };
 
 function createElement(tag, className) {
@@ -54,45 +55,81 @@ function createPlayer(playerObject) {
     return $player;
 }
 
-function changeHP(playerObject) {
-    const $playerLife = document.querySelector('.player' + playerObject.player + ' .life');
-    const lifeChange = Math.ceil(Math.random() * 20);
-    playerObject.hp -= lifeChange;
-    //setting 0 as hp to avoid values above zero
-    if (playerObject.hp < 0) {
-        playerObject.hp = 0;
-    }
+function createReloadButton() {
+    const $reloadWrap = createElement('div', 'reloadWrap');
+    const $restartButton = createElement('button', 'button');
+    $restartButton.innerText = 'Restart';
+    $restartButton.style.visibility = 'hidden';
 
-    $playerLife.style.width = playerObject.hp + '%';
+    $reloadWrap.appendChild($restartButton);
+    $arena.appendChild($reloadWrap);
+
+    return $restartButton;
+}
+
+function changeHP(hpToChange) {
+    this.hp -= hpToChange;
+    //setting 0 as hp to avoid values above zero
+    if (this.hp < 0) {
+        this.hp = 0;
+    }
+}
+
+function elHp() {
+    const $playerLife = document.querySelector('.player' + this.player + ' .life');
+    return $playerLife;
+}
+
+function renderHp() {
+    this.elHp().style.width = this.hp + '%';
+}
+
+function getRandomNumber() {
+    const randomNumber = Math.ceil(Math.random() * 20);
+    return randomNumber;
 }
 
 function findWinner(player1, player2) {
     if (player1.hp === 0 && player2.hp === 0) {
-        displayWinner();
+        $arena.appendChild(getResultText());
     } else if (player1.hp === 0) {
-        displayWinner(player2.name);
+        $arena.appendChild(getResultText(player2.name));
     } else if (player2.hp === 0) {
-        displayWinner(player1.name);
+        $arena.appendChild(getResultText(player1.name));
     }
 }
 
-function displayWinner(name) {
-    const $loseTitle = createElement('div', 'loseTitle');
+function getResultText(name) {
+    const $loseTitle = createElement('div', 'winTitle');
     // if name is not null then we print the name of a winner - otherwise it's a draw
     if(name) {
         $loseTitle.innerText = name + ' Wins';
     } else {
         $loseTitle.innerText = 'Draw'; //tested it, works correctly and 'Draw' is displayed
     }
-    $arena.appendChild($loseTitle);
+    return $loseTitle;
+}
+
+function changeButtonsStyleAfterFinish() {
     $randomButton.disabled = true;
+    $reloadButton.style.visibility = 'visible';
 }
 
 $randomButton.addEventListener('click', function () {
-    changeHP(scorpion);
-    changeHP(sonya);
+    scorpion.changeHp(getRandomNumber());
+    scorpion.renderHp();
+    sonya.changeHp(getRandomNumber());
+    sonya.renderHp();
     findWinner(scorpion, sonya);
+    // if at least one player has no hp it means that game is over and we change displaying of buttons
+    if(scorpion.hp === 0 || sonya.hp === 0) {
+        changeButtonsStyleAfterFinish();
+    }
 });
+
+$reloadButton.addEventListener('click', function () {
+    window.location.reload();
+})
 
 $arena.appendChild(createPlayer(scorpion));
 $arena.appendChild(createPlayer(sonya));
