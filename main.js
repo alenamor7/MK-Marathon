@@ -1,6 +1,15 @@
 const $arena = document.querySelector('.arenas');
-const $randomButton = document.querySelector('.button');
-const $reloadButton = createReloadButton();
+const $fightButton = document.querySelector('.button');
+const $formFight = document.querySelector('.control');
+
+
+const HIT = {
+    head: 30,
+    body: 25,
+    foot: 20
+}
+const ATTACK = ['head', 'body', 'foot'];;
+
 
 const scorpion = {
     player: 1,
@@ -8,9 +17,9 @@ const scorpion = {
     hp: 100,
     img: 'http://reactmarathon-api.herokuapp.com/assets/scorpion.gif',
     weapon: ['kunai', 'axe', 'ninja sword'],
-    changeHp: changeHP,
-    elHp: elHp,
-    renderHp: renderHp
+    changeHp,
+    elHp,
+    renderHp
 };
 
 const sonya = {
@@ -19,10 +28,11 @@ const sonya = {
     hp: 100,
     img: 'http://reactmarathon-api.herokuapp.com/assets/sonya.gif',
     weapon: ['wind blade', 'garrote wire', 'energy bracelets'],
-    changeHp: changeHP,
-    elHp: elHp,
-    renderHp: renderHp
+    changeHp,
+    elHp,
+    renderHp
 };
+
 
 function createElement(tag, className) {
     const $tag = document.createElement(tag);
@@ -56,18 +66,18 @@ function createPlayer(playerObject) {
 }
 
 function createReloadButton() {
-    const $reloadWrap = createElement('div', 'reloadWrap');
-    const $restartButton = createElement('button', 'button');
-    $restartButton.innerText = 'Restart';
-    $restartButton.style.visibility = 'hidden';
+    const $reloadButtonDiv = createElement('div', 'reloadWrap');
+    const $reloadButton = createElement('button', 'button');
+    $reloadButton.innerText = 'Restart';
 
-    $reloadWrap.appendChild($restartButton);
-    $arena.appendChild($reloadWrap);
-
-    return $restartButton;
+    $reloadButton.addEventListener('click', function() {
+        window.location.reload();
+    })
+    $reloadButtonDiv.appendChild($reloadButton);
+    $arena.appendChild($reloadButtonDiv);
 }
 
-function changeHP(hpToChange) {
+function changeHp(hpToChange) {
     this.hp -= hpToChange;
     //setting 0 as hp to avoid values above zero
     if (this.hp < 0) {
@@ -84,8 +94,8 @@ function renderHp() {
     this.elHp().style.width = this.hp + '%';
 }
 
-function getRandomNumber() {
-    const randomNumber = Math.ceil(Math.random() * 20);
+function getRandomNumber(max) {
+    const randomNumber = Math.ceil(Math.random() * max);
     return randomNumber;
 }
 
@@ -110,25 +120,63 @@ function getResultText(name) {
     return $loseTitle;
 }
 
-function changeButtonsStyleAfterFinish() {
-    $randomButton.disabled = true;
-    $reloadButton.style.visibility = 'visible';
+function enemyAttack() {
+    const hit = ATTACK[getRandomNumber(3) - 1];
+    const defence = ATTACK[getRandomNumber(3) - 1];
+    return {
+        value: getRandomNumber(HIT[hit]),
+        hit,
+        defence
+    }
 }
 
-$randomButton.addEventListener('click', function () {
-    scorpion.changeHp(getRandomNumber());
+/*
+This function will be called twice
+depending on who is hitter and who is defender
+ */
+function getChangeHpAfterPlayerAttack(hitter, defender) {
+    if (hitter.hit === defender.defence) {
+        if (hitter.value > defender.value) {
+            return hitter.value - defender.value;
+        } else {
+            return 0;
+        }
+    } else {
+        return hitter.value;
+    }
+}
+
+
+$formFight.addEventListener('submit', function (event) {
+    event.preventDefault();
+    const enemy = enemyAttack();
+    const attack = {};
+
+    for (let item of $formFight) {
+        if (item.checked && item.name === 'hit') {
+            attack.value = getRandomNumber(HIT[item.value]);
+            attack.hit = item.value;
+        }
+        if (item.checked && item.name === 'defence') {
+            attack.defence = item.value;
+        }
+        item.checked = false;
+    }
+
+    //scorpion is our player and enemy is hitter for him
+    scorpion.changeHp(getChangeHpAfterPlayerAttack(enemy, attack));
     scorpion.renderHp();
-    sonya.changeHp(getRandomNumber());
+
+    //sonya is enemy player and we should attack it, so enemy is a defender
+    sonya.changeHp(getChangeHpAfterPlayerAttack(attack, enemy));
     sonya.renderHp();
+
     findWinner(scorpion, sonya);
     // if at least one player has no hp it means that game is over and we change displaying of buttons
     if(scorpion.hp === 0 || sonya.hp === 0) {
-        changeButtonsStyleAfterFinish();
+        $fightButton.disabled = true;
+        createReloadButton();
     }
-});
-
-$reloadButton.addEventListener('click', function () {
-    window.location.reload();
 })
 
 $arena.appendChild(createPlayer(scorpion));
