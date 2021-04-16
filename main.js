@@ -256,6 +256,7 @@ function generateLogs(type, player1, player2, changedHp) {
             break;
         case 'draw' :
             el = `<p>${randomLog}</p>`;
+            break;
     }
     $chat.insertAdjacentHTML('afterbegin', el);
 }
