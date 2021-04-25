@@ -1,4 +1,3 @@
-import {scorpion, sonya} from "./players.js";
 import {getRandomNumber} from "./random_number.js";
 import {$formFight} from "./selectors.js";
 import {generateLogs} from "./logs_generation.js";
@@ -8,11 +7,11 @@ import {HIT, ATTACK} from "./hit_attack.js";
 added also a player to the object of enemy
 because it allows me to use generateLog() everywhere I need
  */
-export function enemyAttack() {
+export function enemyAttack(player) {
     const hit = ATTACK[getRandomNumber(3) - 1];
     const defence = ATTACK[getRandomNumber(3) - 1];
     return {
-        player: sonya,
+        player: player,
         value: getRandomNumber(HIT[hit]),
         hit,
         defence
@@ -23,18 +22,17 @@ export function enemyAttack() {
 added also a player(scorpion) to the object of our player
 because it allows me to use generateLog() everywhere I need
  */
-export function playerAttack() {
+export function playerAttack(player) {
     const attack = {};
-    attack.player = scorpion;
+    attack.player = player;
 
     for (let item of $formFight) {
-        const {checked, name, value, hit, defence} = item;
-        if (checked && name === 'hit') {
-            attack.value = getRandomNumber(HIT[value]);
-            attack.hit = value;
+        if (item.checked && item.name === 'hit') {
+            attack.value = getRandomNumber(HIT[item.value]);
+            attack.hit = item.value;
         }
-        if (checked && name === 'defence') {
-            attack.defence = value;
+        if (item.checked && item.name === 'defence') {
+            attack.defence = item.value;
         }
         item.checked = false;
     }
